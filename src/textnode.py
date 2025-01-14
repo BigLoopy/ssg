@@ -20,6 +20,8 @@ class TextNode():
         #print(f"--->self.url = {url}")
     
     def __eq__(self, value):
+        if (value == None):
+            return False
         return self.text == value.text and self.text_type == value.text_type and self.url == value.url
     
 
