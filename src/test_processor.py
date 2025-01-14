@@ -3,7 +3,7 @@ from processor import split_nodes_delimiter, extract_markdown_images, extract_ma
 from textnode import TextType, TextNode
 
 class TestTextNode(unittest.TestCase):
-    def test_split_nodes_delimeter_none_nodes(self):
+    def test_split_nodes_image_none_nodes(self):
         old_nodes = None
         new_nodes = split_nodes_delimiter(old_nodes,"*",TextType.BOLD)
         self.assertEqual(new_nodes, list())
@@ -46,14 +46,10 @@ class TestTextNode(unittest.TestCase):
         # print(f"!!--->{expected}")
         self.assertEqual(new_nodes, expected)
 
-    def test_split_nodes_delimeter_delimeter(self):
+    def test_split_nodes_delimeter_delimeter_not_in(self):
         old_nodes = [TextNode("This is **bolded phrase** in here",TextType.TEXT)]
-        new_nodes = split_nodes_delimiter(old_nodes,"**",TextType.BOLD)
-        expected = [
-            TextNode("This is ", TextType.TEXT),
-            TextNode("bolded phrase", TextType.BOLD),
-            TextNode(" in here", TextType.TEXT),
-        ]
+        new_nodes = split_nodes_delimiter(old_nodes,"-",TextType.ITALIC)
+        expected = [TextNode("This is **bolded phrase** in here",TextType.TEXT)]
         self.assertEqual(new_nodes, expected)
 
     def test_split_nodes_delimeter_delimeter_start(self):
@@ -126,6 +122,19 @@ class TestTextNode(unittest.TestCase):
         expected = [("rick roll", "https://i.imgur.com/aKaOqIh.gif"), ("obi wan", "https://i.imgur.com/fJRm4Vk.jpeg")]
         self.assertEqual(matches, expected)
 
+
+    def test_extract_markdown_images_empty_text(self):
+        text = ""
+        matches = extract_markdown_images(text)
+        expected = list()
+        self.assertEqual(matches, expected)
+
+
+    def test_extract_markdown_images_nothing_to_extract(self):
+        text = ""
+        matches = extract_markdown_images(text)
+        expected = list()
+        self.assertEqual(matches, expected)
 
 if __name__ == "__main__":
     unittest.main()
