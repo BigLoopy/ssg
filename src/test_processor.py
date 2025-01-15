@@ -1,5 +1,5 @@
 import unittest
-from processor import split_nodes_delimiter, extract_markdown_images, extract_markdown_links
+from processor import split_nodes_delimiter, extract_markdown_images, extract_markdown_links, text_to_textnodes
 from textnode import TextType, TextNode
 
 class TestTextNode(unittest.TestCase):
@@ -32,6 +32,52 @@ class TestTextNode(unittest.TestCase):
         new_nodes = split_nodes_delimiter(old_nodes,None,TextType.BOLD)
         expected = [TextNode("This is **bolded phrase** in here",TextType.TEXT)]
         self.assertEqual(new_nodes, expected)
+
+    def test_split_nodes_delimeter_only_delimeted(self):
+        old_nodes = [TextNode("**bolded phrase**",TextType.TEXT)]
+        new_nodes = split_nodes_delimiter(old_nodes,"**",TextType.BOLD)
+        expected = [
+            TextNode("bolded phrase", TextType.BOLD),
+        ]
+        # print(f"!!->{old_nodes}")
+        # print(f"!!-->{new_nodes}")
+        # print(f"!!--->{expected}")
+        self.assertEqual(new_nodes, expected)
+
+    def test_split_nodes_delimeter_already_split_doesnt_change(self):
+        old_nodes = [TextNode("bolded phrase",TextType.BOLD)]
+        new_nodes = split_nodes_delimiter(old_nodes,"**",TextType.BOLD)
+        expected = [
+            TextNode("bolded phrase", TextType.BOLD)
+        ]
+        self.assertEqual(new_nodes, expected)
+        
+
+    def test_split_nodes_delimeter_only_delimeted_multiple_nodes(self):
+        old_nodes = [TextNode("**bolded phrase**",TextType.TEXT),TextNode("**bolded phrase**",TextType.TEXT)]
+        new_nodes = split_nodes_delimiter(old_nodes,"**",TextType.BOLD)
+        expected = [
+            TextNode("bolded phrase", TextType.BOLD),
+            TextNode("bolded phrase", TextType.BOLD),
+        ]
+        # print(f"!!->{old_nodes}")
+        # print(f"!!-->{new_nodes}")
+        # print(f"!!--->{expected}")
+        self.assertEqual(new_nodes, expected)
+
+    def test_split_nodes_delimeter_only_delimeted_double_process(self):
+        old_nodes = [TextNode("**bolded phrase**",TextType.TEXT)]
+        new_nodes = split_nodes_delimiter(old_nodes,"**",TextType.BOLD)
+        expected = [
+            TextNode("bolded phrase", TextType.BOLD),
+        ]
+        # print(f"!!->{old_nodes}")
+        # print(f"!!-->{new_nodes}")
+        # print(f"!!--->{expected}")
+        self.assertEqual(new_nodes, expected)
+        
+        newer_nodes = split_nodes_delimiter(new_nodes,"**",TextType.BOLD)
+        self.assertEqual(new_nodes, newer_nodes)
 
     def test_split_nodes_delimeter_bold_delimeter(self):
         old_nodes = [TextNode("This is **bolded phrase** in here",TextType.TEXT)]
@@ -104,6 +150,29 @@ class TestTextNode(unittest.TestCase):
 
         self.assertEqual(new_nodes, expected)
 
+    def test_split_nodes_delimeter_chained_different_delimeters(self):
+        old_nodes = [TextNode("This is **bolded phrase** in here `don't split the code`",TextType.TEXT)]
+        new_nodes = split_nodes_delimiter(old_nodes,"**",TextType.BOLD)
+        
+        expected = [
+            TextNode("This is ", TextType.TEXT),
+            TextNode("bolded phrase", TextType.BOLD),
+            TextNode(" in here `don't split the code`", TextType.TEXT),
+        ]
+        self.assertEqual(new_nodes, expected)
+        
+
+        newer_nodes = split_nodes_delimiter(new_nodes,"`", TextType.CODE)
+        expecteder = [
+            TextNode("This is ", TextType.TEXT),
+            TextNode("bolded phrase", TextType.BOLD),
+            TextNode(" in here ", TextType.TEXT),
+            TextNode("don't split the code", TextType.CODE),
+        ]
+        self.assertEqual(newer_nodes, expecteder)
+
+
+
     def test_extract_markdown_images(self):
         text = "This is text with a ![rick roll](https://i.imgur.com/aKaOqIh.gif) and ![obi wan](https://i.imgur.com/fJRm4Vk.jpeg)"
         matches = extract_markdown_images(text)
@@ -135,6 +204,27 @@ class TestTextNode(unittest.TestCase):
         matches = extract_markdown_images(text)
         expected = list()
         self.assertEqual(matches, expected)
+
+    def test_text_to_textnodes(self):
+        text = "This is **text** with an *italic* word and a `code block` and an ![obi wan image](https://i.imgur.com/fJRm4Vk.jpeg) and a [link](https://boot.dev)"
+        expected = [
+            TextNode("This is ", TextType.TEXT),
+            TextNode("text", TextType.BOLD),
+            TextNode(" with an ", TextType.TEXT),
+            TextNode("italic", TextType.ITALIC),
+            TextNode(" word and a ", TextType.TEXT),
+            TextNode("code block", TextType.CODE),
+            TextNode(" and an ", TextType.TEXT),
+            TextNode("obi wan image", TextType.IMAGE, "https://i.imgur.com/fJRm4Vk.jpeg"),
+            TextNode(" and a ", TextType.TEXT),
+            TextNode("link", TextType.LINK, "https://boot.dev"),
+        ]
+
+        result = text_to_textnodes(text)
+        self.assertEqual(result, expected)
+
+
+
 
 if __name__ == "__main__":
     unittest.main()

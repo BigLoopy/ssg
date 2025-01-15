@@ -1,7 +1,9 @@
 from textnode import TextNode, TextType
 import re
 
-def split_nodes_delimiter(old_nodes, delimiter, text_type):
+def split_nodes_delimiter(old_nodes, delimiter, text_type, debug = False):
+    if debug == True: print(f"--CALL-->split_nodes_delimiter({old_nodes}, {delimiter}, {text_type}):")
+    
     if isinstance(old_nodes,list) == False and old_nodes != None and isinstance(old_nodes,TextNode) == False:
         raise ValueError("old_nodes must be a list of TextNode, or a single TextNode")
     if isinstance(old_nodes, list):
@@ -22,35 +24,44 @@ def split_nodes_delimiter(old_nodes, delimiter, text_type):
     # print(f"----->processing {len(nodes_to_process)} items")
     
     for node in nodes_to_process:
-        # print(f"--->processing node: {node}")
+        if debug == True: print(f"--->processing node: {node}")
         text = node.text
         firstdelim = text.find(delimiter)
         lastdelim = text.find(delimiter,firstdelim+len(delimiter))
 
+        if debug == True: print(f"firstdelim->{firstdelim}")
+        if debug == True: print(f"lastdelim->{lastdelim}")
+
+
         if firstdelim >=0 and lastdelim == -1:
             raise ValueError(f"delimeter {delimiter} was not closed in {node.text}")
 
+        type_override = TextType.TEXT
         if firstdelim == -1 and lastdelim == -1:
             part1 = text
             part2 = ""
             part3 = ""
+            if debug == True: print(f"-------> Forcing node type to {node.text_type}")
+            type_override = node.text_type
+            
         else:        
-            # print(f"{firstdelim}->{lastdelim}")
+            if debug == True: print(f"--- delims ->{firstdelim}->{lastdelim}")
             part1 = text[:firstdelim]
             part2 = text[firstdelim + len(delimiter):lastdelim]
             part3 = text[lastdelim + len(delimiter):]
+            
 
-        # print(f"part1->{part1}")
-        # print(f"part2->{part2}")
-        # print(f"part3->{part3}")
+        if debug == True:  print(f"part1->{part1}")
+        if debug == True:  print(f"part2->{part2}")
+        if debug == True: print(f"part3->{part3}")
 
         if part1 != "":
-            new_nodes.append(TextNode(part1,TextType.TEXT))
+            new_nodes.append(TextNode(part1,type_override, node.url))
         if (part2 != ""):
             new_nodes.append(TextNode(part2,text_type))
         if part3 != "":
             #if delimiter in part3:
-            new_nodes.extend(split_nodes_delimiter([TextNode(part3,text_type)],delimiter,text_type))
+            new_nodes.extend(split_nodes_delimiter([TextNode(part3,TextType.TEXT)],delimiter,text_type))
             #new_nodes.append(TextNode(part3,TextType.TEXT))
 
     return new_nodes
@@ -241,5 +252,21 @@ def split_nodes_link(old_nodes):
             #if delimiter in part3:
             new_nodes.extend(split_nodes_link([TextNode(part3,TextType.TEXT)]))
             #new_nodes.append(TextNode(part3,TextType.TEXT))
+
+    return new_nodes
+
+def text_to_textnodes(text, debug = False):
+    new_nodes = [TextNode(text,TextType.TEXT)]
+    if debug == True: print(f"-----1>\n{new_nodes}")
+    new_nodes = split_nodes_delimiter(new_nodes,"**",TextType.BOLD)
+    if debug == True: print(f"-----2>\n{new_nodes}")
+    new_nodes = split_nodes_delimiter(new_nodes,"*",TextType.ITALIC)
+    if debug == True: print(f"-----3>\n{new_nodes}")
+    new_nodes = split_nodes_delimiter(new_nodes,"`",TextType.CODE)
+    if debug == True: print(f"-----4>\n{new_nodes}")
+    new_nodes = split_nodes_link(new_nodes)
+    if debug == True: print(f"-----5>\n{new_nodes}")
+    new_nodes = split_nodes_image(new_nodes)
+    if debug == True: print(f"-----6>\n{new_nodes}")
 
     return new_nodes
