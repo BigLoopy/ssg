@@ -256,6 +256,7 @@ def split_nodes_link(old_nodes):
     return new_nodes
 
 def text_to_textnodes(text, debug = False):
+
     new_nodes = [TextNode(text,TextType.TEXT)]
     if debug == True: print(f"-----1>\n{new_nodes}")
     new_nodes = split_nodes_delimiter(new_nodes,"**",TextType.BOLD)
@@ -270,3 +271,38 @@ def text_to_textnodes(text, debug = False):
     if debug == True: print(f"-----6>\n{new_nodes}")
 
     return new_nodes
+
+def markdown_to_blocks(markdown, debug = False):
+    if debug == True: print("--CALL-->markdown_to_blocks(markdown)")
+    if debug == True: print(f"markdown:\n{markdown}")
+    
+    results = list()
+
+    if markdown == None or markdown == "":
+        return results
+    
+    new_block = True
+    accumulator = list()
+    for block in markdown.split("\n"):
+        if debug == True: print(f"----->working on: {block}")
+        
+        # detect trivial blocks
+        if (block.strip() == ""):
+            if debug == True: print("------->Trivial Block (all whitespace)")
+            new_block = True
+            if accumulator != list(): 
+                if debug == True: print(f"------->Trivial Block accumulator->results{accumulator}")
+                results.append("\n".join(accumulator))
+            accumulator = list()
+            continue
+
+        accumulator.append(block.strip())
+        #if debug == True: print(f"------->{accumulator}")
+        new_block = False
+        
+    if accumulator != list(): 
+        if debug == True: print(f"------->accumulator->results{accumulator.strip()}")
+        results.append("\n".join(accumulator))
+
+    if debug == True: print(f"--->Returning: {results}")
+    return results

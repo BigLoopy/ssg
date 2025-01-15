@@ -1,5 +1,5 @@
 import unittest
-from processor import split_nodes_delimiter, extract_markdown_images, extract_markdown_links, text_to_textnodes
+from processor import split_nodes_delimiter, extract_markdown_images, extract_markdown_links, text_to_textnodes, markdown_to_blocks
 from textnode import TextType, TextNode
 
 class TestTextNode(unittest.TestCase):
@@ -223,7 +223,88 @@ class TestTextNode(unittest.TestCase):
         result = text_to_textnodes(text)
         self.assertEqual(result, expected)
 
+    def test_markdown_to_blocks_none_returns_empty_list(self):
+        markdown = None
+        expected = list()
 
+        results = markdown_to_blocks(markdown)
+
+        self.assertEqual(results, expected)
+                                                        
+    def test_markdown_to_blocks_empty_returns_empty_list(self):
+        markdown = ""
+        expected = list()
+
+        results = markdown_to_blocks(markdown)
+
+        self.assertEqual(results, expected)
+
+
+    def test_markdown_to_blocks_single_block(self):
+        markdown = "# This is a heading"
+        expected = ["# This is a heading"]
+
+        results = markdown_to_blocks(markdown)
+        self.assertEqual(results, expected)
+
+    def test_markdown_to_blocks_ignore_empties_before(self):
+        markdown = """
+        
+        
+        # This is a heading"""
+        expected = ["# This is a heading"]
+
+        results = markdown_to_blocks(markdown)
+        self.assertEqual(results, expected)
+
+    def test_markdown_to_blocks_ignore_empties_after(self):
+        markdown = """# This is a heading
+        
+        
+        """
+        expected = ["# This is a heading"]
+
+        results = markdown_to_blocks(markdown)
+        self.assertEqual(results, expected)
+
+    def test_markdown_to_blocks_single_multiline_block(self):
+        markdown = """
+        # This is a heading
+        # This is a heading
+        # This is a heading
+        """ 
+        
+        expected = ["# This is a heading\n# This is a heading\n# This is a heading"]
+
+        results = markdown_to_blocks(markdown)
+        self.assertEqual(results, expected)
+
+
+    def test_markdown_two_single_line_blocks(self):
+        markdown = """# This is a heading
+        
+        # This is a heading
+        """
+        expected = ["# This is a heading", "# This is a heading"]
+
+        results = markdown_to_blocks(markdown)
+        self.assertEqual(results, expected)
+
+    def test_markdown_to_block_complex(self):
+        markdown = """# This is a heading
+
+This is a paragraph of text. It has some **bold** and *italic* words inside of it.
+
+* This is the first list item in a list block
+* This is a list item
+* This is another list item"""
+
+        expected = ["# This is a heading", 
+                    "This is a paragraph of text. It has some **bold** and *italic* words inside of it.", 
+                    "* This is the first list item in a list block\n* This is a list item\n* This is another list item"]
+
+        results = markdown_to_blocks(markdown)
+        self.assertEqual(results, expected)
 
 
 if __name__ == "__main__":
